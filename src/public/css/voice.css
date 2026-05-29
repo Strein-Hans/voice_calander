@@ -1,0 +1,97 @@
+.voice-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.voice-btn {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(74, 144, 217, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.voice-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 24px rgba(74, 144, 217, 0.4);
+}
+
+.voice-btn:active,
+.voice-btn.listening {
+  transform: scale(1.1);
+  box-shadow: 0 8px 32px rgba(74, 144, 217, 0.5);
+}
+
+.voice-btn .mic-icon {
+  color: white;
+}
+
+.voice-btn.listening .mic-icon {
+  animation: pulse-icon 1s ease-in-out infinite;
+}
+
+.voice-rings {
+  position: absolute;
+  inset: -10px;
+  pointer-events: none;
+}
+
+.voice-btn.listening .voice-rings::before,
+.voice-btn.listening .voice-rings::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+  animation: ring-expand 1.5s ease-out infinite;
+}
+
+.voice-btn.listening .voice-rings::after {
+  animation-delay: 0.5s;
+}
+
+@keyframes pulse-icon {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes ring-expand {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.voice-hint {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.voice-result {
+  margin-top: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.voice-text {
+  min-height: 20px;
+}

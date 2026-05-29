@@ -1,0 +1,52 @@
+[data-theme="dark"] {
+  --primary: #5B9FE0;
+  --primary-dark: #4A8BC9;
+  --primary-light: #7BB3EA;
+  --bg: #1A1B1E;
+  --surface: #25262B;
+  --text: #E4E5E7;
+  --text-secondary: #9B9DA1;
+  --border: #37383C;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .cal-cell:hover {
+  background: #2D2E33;
+}
+
+[data-theme="dark"] .cal-cell.today {
+  background: #1E2A3A;
+}
+
+[data-theme="dark"] .voice-btn {
+  box-shadow: 0 4px 16px rgba(91, 159, 224, 0.2);
+}
+
+[data-theme="dark"] .voice-result {
+  background: #2D2E33;
+}
+
+[data-theme="dark"] .parse-card,
+[data-theme="dark"] .candidate-card {
+  background: #2D2E33;
+  border-color: #37383C;
+}
+
+[data-theme="dark"] .candidate-item {
+  background: #2D2E33;
+  border-color: #37383C;
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group textarea,
+[data-theme="dark"] .form-group select {
+  background: #2D2E33;
+  border-color: #37383C;
+  color: var(--text);
+}
+
+[data-theme="dark"] .nav-btn {
+  background: #2D2E33;
+  border-color: #37383C;
+  color: var(--text);
+}
