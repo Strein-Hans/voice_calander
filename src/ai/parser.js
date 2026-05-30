@@ -26,6 +26,15 @@ function buildSystemPrompt(language) {
 用户语言: ${lang}
 今天是星期${['日','一','二','三','四','五','六'][new Date().getDay()]}
 
+## 多轮对话规则
+
+- 你可以看到对话历史。当用户使用指代表达（"改到3点"、"算了"、"好的"、"第一个"等），结合上下文理解意图
+- "改到X点" → update_event，保留上一轮 pending_action 中的事件信息
+- "算了"、"取消"、"不要了" → cancel
+- "好的"、"确认"、"就这样" → confirm
+- "换到/改成" + 时间 → update_event，title/date 等字段从上下文继承
+- 如果没有上下文可以参考，将 intent 设为 unclear
+
 ## 支持的意图
 
 1. add_event - 创建事件
@@ -84,24 +93,50 @@ cancel: { cancelled: true }
 - 不确定的字段设为 null
 - add_event/delete_event/update_event 的 needs_confirm 必须为 true
 - query_events 的 needs_confirm 为 false
-- 只输出 JSON，不要输出任何其他文字`;
+- 只输出 JSON，不要输出任何其他文字
+
+## 智能提醒规则
+
+当用户未明确指定提醒时间时，根据事件类型自动设置 reminder_minutes：
+- 包含"会议/评审/面试/review/interview/ミーティング" → 15 分钟
+- 包含"就医/看病/医院/牙/doctor/hospital/病院/歯" → 60 分钟
+- 包含"吃药/服药/medicine/薬/服薬" → 5 分钟
+- 全天事件 (all_day=true) → 60 分钟
+- 用户明确指定（如"提前半小时提醒"）→ 使用用户指定值
+- 其他情况 → 15 分钟`;
 }
 
-async function parseVoiceCommand(text, language, context) {
+async function parseVoiceCommand(text, language, context, history) {
   const client = getClient();
   const model = process.env.AI_MODEL || 'gpt-4o-mini';
 
   const messages = [
     { role: 'system', content: buildSystemPrompt(language) },
-    { role: 'user', content: text },
   ];
 
-  if (context.pending_action) {
-    messages.splice(1, 0, {
+  if (history && history.length > 0) {
+    const recentHistory = history.slice(-6);
+    let tokenEstimate = 0;
+    for (const msg of recentHistory) {
+      tokenEstimate += (msg.content || '').length * 0.5;
+    }
+    const maxTokens = 2000;
+    let trimmed = recentHistory;
+    while (tokenEstimate > maxTokens && trimmed.length > 0) {
+      tokenEstimate -= (trimmed[0].content || '').length * 0.5;
+      trimmed = trimmed.slice(1);
+    }
+    messages.push(...trimmed);
+  }
+
+  if (context && context.pending_action) {
+    messages.push({
       role: 'assistant',
       content: JSON.stringify(context.pending_action),
     });
   }
+
+  messages.push({ role: 'user', content: text });
 
   const response = await client.chat.completions.create({
     model,

@@ -141,3 +141,7 @@
   min-height: 20px;
   color: var(--text);
 }
+
+.voice-hint-error {
+  color: var(--danger) !important;
+}

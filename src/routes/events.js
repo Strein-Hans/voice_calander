@@ -1,6 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const eventDao = require('../db/event-dao');
+
+const writeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many requests, please try again later' },
+});
 
 router.get('/', (req, res) => {
   try {
@@ -22,11 +31,20 @@ router.get('/:id', (req, res) => {
   }
 });
 
-router.post('/', (req, res) => {
+router.post('/', writeLimiter, (req, res) => {
   try {
     const { title, start_time, end_time, description, all_day, reminder_minutes, color, recurrence_rule, source } = req.body;
     if (!title || !start_time) {
       return res.status(400).json({ success: false, error: 'title and start_time are required' });
+    }
+    if (typeof title !== 'string' || title.trim().length === 0) {
+      return res.status(400).json({ success: false, error: 'title must be a non-empty string' });
+    }
+    if (isNaN(Date.parse(start_time))) {
+      return res.status(400).json({ success: false, error: 'start_time must be a valid ISO date' });
+    }
+    if (end_time && isNaN(Date.parse(end_time))) {
+      return res.status(400).json({ success: false, error: 'end_time must be a valid ISO date' });
     }
     const event = eventDao.create({
       title, start_time, end_time, description, all_day,
@@ -39,7 +57,7 @@ router.post('/', (req, res) => {
   }
 });
 
-router.put('/:id', (req, res) => {
+router.put('/:id', writeLimiter, (req, res) => {
   try {
     const event = eventDao.update(req.params.id, req.body);
     if (!event) return res.status(404).json({ success: false, error: 'Event not found' });
@@ -49,7 +67,7 @@ router.put('/:id', (req, res) => {
   }
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', writeLimiter, (req, res) => {
   try {
     eventDao.remove(req.params.id);
     res.json({ success: true });

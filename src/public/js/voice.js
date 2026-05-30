@@ -42,7 +42,15 @@ const Voice = {
       console.error('Speech error:', event.error);
       this.setState('idle');
       if (this.onStateChange) {
-        this.onStateChange('error', event.error);
+        const errorMessages = {
+          'not-allowed': I18n.t('micDenied'),
+          'network': I18n.t('networkError'),
+          'no-speech': I18n.t('noSpeech'),
+          'aborted': '',
+          'audio-capture': I18n.t('micDenied'),
+        };
+        const msg = errorMessages[event.error] || event.error;
+        if (msg) this.onStateChange('error', msg);
       }
     };
 

@@ -1,4 +1,4 @@
-const { getDb, save } = require('./init');
+const { getDb, save, scheduleSave } = require('./init');
 
 function queryByText(sql, params) {
   const db = getDb();
@@ -15,7 +15,7 @@ function queryByText(sql, params) {
 function run(sql, params) {
   const db = getDb();
   db.run(sql, params);
-  save();
+  scheduleSave();
   return db;
 }
 
@@ -134,4 +134,67 @@ function createReminder(eventId, startTime, minutesBefore) {
   );
 }
 
-module.exports = { getAll, getById, create, update, remove, search };
+function findOverlapping(startTime, endTime, excludeId) {
+  let effectiveEnd = endTime;
+  if (!effectiveEnd) {
+    const start = new Date(startTime);
+    start.setHours(start.getHours() + 1);
+    effectiveEnd = start.toISOString().replace('Z', '').replace('T', ' ').slice(0, 19);
+  }
+
+  let sql = 'SELECT * FROM events WHERE start_time < ? AND end_time > ?';
+  const params = [effectiveEnd, startTime];
+
+  if (excludeId) {
+    sql += ' AND id != ?';
+    params.push(excludeId);
+  }
+
+  return queryByText(sql, params);
+}
+
+function findFreeSlots(date, workStart, workEnd, durationMinutes) {
+  const startOfWork = new Date(`${date}T${String(workStart).padStart(2, '0')}:00:00`);
+  const endOfWork = new Date(`${date}T${String(workEnd).padStart(2, '0')}:00:00`);
+
+  const dayEvents = queryByText(
+    "SELECT * FROM events WHERE date(start_time) = ? AND (all_day = 0 OR all_day IS NULL) ORDER BY start_time",
+    [date]
+  );
+
+  const slots = [];
+  let cursor = new Date(startOfWork);
+
+  for (const ev of dayEvents) {
+    const evStart = new Date(ev.start_time);
+    const evEnd = ev.end_time ? new Date(ev.end_time) : new Date(evStart.getTime() + 3600000);
+
+    if (cursor < evStart) {
+      const gapMinutes = (evStart - cursor) / 60000;
+      if (gapMinutes >= durationMinutes) {
+        const slotEnd = new Date(Math.min(evStart.getTime(), cursor.getTime() + durationMinutes * 60000));
+        slots.push({
+          start: cursor.toISOString().slice(0, 16).replace('T', ' ') + ':00',
+          end: slotEnd.toISOString().slice(0, 16).replace('T', ' ') + ':00',
+        });
+        if (slots.length >= 3) return slots;
+      }
+    }
+    if (evEnd > cursor) cursor = new Date(evEnd);
+  }
+
+  if (cursor < endOfWork) {
+    const gapMinutes = (endOfWork - cursor) / 60000;
+    if (gapMinutes >= durationMinutes) {
+      const slotEnd = new Date(Math.min(endOfWork.getTime(), cursor.getTime() + durationMinutes * 60000));
+      slots.push({
+        start: cursor.toISOString().slice(0, 16).replace('T', ' ') + ':00',
+        end: slotEnd.toISOString().slice(0, 16).replace('T', ' ') + ':00',
+      });
+    }
+  }
+
+  return slots.slice(0, 3);
+}
+
+module.exports = { getAll, getById, create, update, remove, search, findOverlapping, findFreeSlots };

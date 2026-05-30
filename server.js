@@ -1,12 +1,14 @@
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
+const os = require('os');
 const { WebSocketServer } = require('ws');
 const path = require('path');
 const { initDatabase, closeDatabase } = require('./src/db/init');
 const eventRoutes = require('./src/routes/events');
 const voiceRoutes = require('./src/routes/voice');
 const settingsRoutes = require('./src/routes/settings');
+const icsRoutes = require('./src/routes/ics');
 const { startReminderService, addClient } = require('./src/services/reminder');
 
 const app = express();
@@ -16,6 +18,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'src/public')));
 
+app.use('/api/events', icsRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/voice', voiceRoutes);
 app.use('/api/settings', settingsRoutes);
@@ -36,8 +39,16 @@ async function start() {
 
   startReminderService();
 
-  server.listen(PORT, () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`Voice Calendar running at http://localhost:${PORT}`);
+    const nets = os.networkInterfaces();
+    for (const name of Object.keys(nets)) {
+      for (const net of nets[name]) {
+        if (net.family === 'IPv4' && !net.internal) {
+          console.log(`Mobile access:  http://${net.address}:${PORT}`);
+        }
+      }
+    }
   });
 
   process.on('SIGINT', () => {

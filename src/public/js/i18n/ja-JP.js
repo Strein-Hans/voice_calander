@@ -33,4 +33,12 @@ window.VOICE_CALENDAR_I18N['ja-JP'] = {
   updatedEvent: 'イベントを更新しました',
   operationCancelled: '操作をキャンセルしました',
   noMatchingEvents: '該当するイベントが見つかりません',
+  micDenied: 'マイクのアクセスが拒否されました。ブラウザの設定で許可してください。',
+  networkError: 'ネットワークエラー。接続を確認してください。',
+  noSpeech: '音声が検出されませんでした。もう一度お試しください。',
+  weekStartDay: 1,
+  dateSchedule: 'スケジュール',
+  conflictWarning: '時間の競合',
+  suggestedTimes: '提案時間',
+  exportCalendar: 'カレンダーにエクスポート',
 };

@@ -12,18 +12,21 @@ function addClient(ws) {
 
 function broadcast(data) {
   const msg = JSON.stringify(data);
+  let sent = false;
   clients.forEach(ws => {
     if (ws.readyState === 1) {
       ws.send(msg);
+      sent = true;
     }
   });
+  return sent;
 }
 
 function checkReminders() {
   try {
     const pending = reminderDao.getPending();
     for (const reminder of pending) {
-      broadcast({
+      const sent = broadcast({
         type: 'reminder',
         event: {
           id: reminder.event_id,
@@ -33,7 +36,9 @@ function checkReminders() {
         },
         remind_at: reminder.remind_at,
       });
-      reminderDao.markNotified(reminder.id);
+      if (sent || clients.length === 0) {
+        reminderDao.markNotified(reminder.id);
+      }
     }
   } catch (err) {
     console.error('Reminder check error:', err.message);

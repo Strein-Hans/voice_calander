@@ -95,13 +95,17 @@ const CalendarUI = {
     const month = this.currentDate.getMonth();
     titleEl.textContent = `${year} ${I18n.t('monthNames')[month]}`;
 
-    const firstDay = new Date(year, month, 1).getDay();
+    const weekStart = parseInt(I18n.t('weekStartDay')) || 0;
+    const dayNames = I18n.t('dayNames');
+    const shiftedNames = [...dayNames.slice(weekStart), ...dayNames.slice(0, weekStart)];
+
+    const firstDay = (new Date(year, month, 1).getDay() - weekStart + 7) % 7;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const prevDays = new Date(year, month, 0).getDate();
     const today = new Date();
 
     let html = '';
-    I18n.t('dayNames').forEach(d => {
+    shiftedNames.forEach(d => {
       html += `<div class="cal-header-cell">${d}</div>`;
     });
 
@@ -148,21 +152,26 @@ const CalendarUI = {
   },
 
   renderWeek(grid, titleEl) {
+    const weekStart = parseInt(I18n.t('weekStartDay')) || 0;
     const today = new Date(this.currentDate);
     const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
+    const offset = (today.getDay() - weekStart + 7) % 7;
+    startOfWeek.setDate(today.getDate() - offset);
 
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
 
     titleEl.textContent = `${startOfWeek.getMonth() + 1}/${startOfWeek.getDate()} - ${endOfWeek.getMonth() + 1}/${endOfWeek.getDate()}`;
 
+    const dayNames = I18n.t('dayNames');
+    const shiftedNames = [...dayNames.slice(weekStart), ...dayNames.slice(0, weekStart)];
+
     let html = '<div class="cal-header-cell"></div>';
     for (let i = 0; i < 7; i++) {
       const d = new Date(startOfWeek);
       d.setDate(startOfWeek.getDate() + i);
       const isToday = d.toDateString() === new Date().toDateString();
-      html += `<div class="cal-header-cell" style="${isToday ? 'color:var(--primary);font-weight:700' : ''}">${I18n.t('dayNames')[i]} ${d.getDate()}</div>`;
+      html += `<div class="cal-header-cell" style="${isToday ? 'color:var(--primary);font-weight:700' : ''}">${shiftedNames[i]} ${d.getDate()}</div>`;
     }
 
     for (let h = 7; h < 22; h++) {
@@ -232,9 +241,20 @@ const CalendarUI = {
     });
 
     grid.querySelectorAll('.cal-cell').forEach(el => {
+      let clickTimer = null;
       el.addEventListener('click', () => {
         const date = el.dataset.date;
-        if (date) App.showAddEventModal(date);
+        if (!date) return;
+        if (clickTimer) {
+          clearTimeout(clickTimer);
+          clickTimer = null;
+          App.showAddEventModal(date);
+        } else {
+          clickTimer = setTimeout(() => {
+            clickTimer = null;
+            EventPanel.loadDateEvents(date);
+          }, 250);
+        }
       });
     });
 
@@ -242,6 +262,7 @@ const CalendarUI = {
       el.addEventListener('click', () => {
         const date = el.dataset.date;
         const hour = el.dataset.hour;
+        if (date) EventPanel.loadDateEvents(date);
         if (date && hour) App.showAddEventModal(date, hour);
       });
     });

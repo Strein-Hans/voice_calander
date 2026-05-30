@@ -33,4 +33,12 @@ window.VOICE_CALENDAR_I18N['zh-CN'] = {
   updatedEvent: '已更新事件',
   operationCancelled: '操作已取消',
   noMatchingEvents: '没有找到匹配的事件',
+  micDenied: '麦克风权限被拒绝，请在浏览器设置中允许',
+  networkError: '网络错误，请检查网络连接',
+  noSpeech: '未检测到语音，请再试一次',
+  weekStartDay: 1,
+  dateSchedule: '日程安排',
+  conflictWarning: '时间冲突',
+  suggestedTimes: '建议时间',
+  exportCalendar: '导出到日历',
 };

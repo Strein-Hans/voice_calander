@@ -4,6 +4,8 @@ const path = require('path');
 
 let db = null;
 let dbPath = null;
+let saveTimer = null;
+let flushTimer = null;
 
 const EVENTS_SCHEMA = `
 CREATE TABLE IF NOT EXISTS events (
@@ -76,7 +78,34 @@ function save() {
   fs.writeFileSync(dbPath, buffer);
 }
 
+function scheduleSave() {
+  if (!db || !dbPath) return;
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    saveTimer = null;
+    save();
+  }, 500);
+
+  if (!flushTimer) {
+    flushTimer = setInterval(() => {
+      if (saveTimer) {
+        clearTimeout(saveTimer);
+        saveTimer = null;
+        save();
+      }
+    }, 10000);
+  }
+}
+
 function closeDatabase() {
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+  }
+  if (flushTimer) {
+    clearInterval(flushTimer);
+    flushTimer = null;
+  }
   if (db) {
     save();
     db.close();
@@ -84,4 +113,4 @@ function closeDatabase() {
   }
 }
 
-module.exports = { initDatabase, getDb, save, closeDatabase };
+module.exports = { initDatabase, getDb, save, scheduleSave, closeDatabase };

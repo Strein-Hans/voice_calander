@@ -18,6 +18,13 @@ const App = {
 
     EventPanel.loadTodayEvents();
 
+    document.getElementById('exportAllBtn').addEventListener('click', () => {
+      const d = CalendarUI.currentDate;
+      const start = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 19);
+      const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59).toISOString().slice(0, 19);
+      Api.exportAllIcs(start, end);
+    });
+
     document.getElementById('langSelect').addEventListener('change', (e) => {
       I18n.setLang(e.target.value);
       CalendarUI.render();
@@ -30,29 +37,47 @@ const App = {
     const hint = document.getElementById('voiceHint');
     const result = document.getElementById('voiceResult');
     const textEl = document.getElementById('voiceText');
+    let pressStart = 0;
 
-    btn.addEventListener('mousedown', () => Voice.startListening());
-    btn.addEventListener('mouseup', () => Voice.stopListening());
-    btn.addEventListener('mouseleave', () => {
+    btn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      pressStart = Date.now();
+      Voice.startListening();
+    });
+
+    btn.addEventListener('pointerup', (e) => {
+      e.preventDefault();
+      const duration = Date.now() - pressStart;
+      if (duration < 300) {
+        Voice.toggleListening();
+      } else {
+        Voice.stopListening();
+      }
+    });
+
+    btn.addEventListener('pointerleave', () => {
       if (Voice.state === 'listening') Voice.stopListening();
     });
-    btn.addEventListener('touchstart', (e) => { e.preventDefault(); Voice.startListening(); });
-    btn.addEventListener('touchend', (e) => { e.preventDefault(); Voice.stopListening(); });
-
-    btn.addEventListener('click', () => Voice.toggleListening());
 
     Voice.onStateChange = (state, interim) => {
       if (state === 'listening') {
         btn.classList.add('listening');
         hint.textContent = I18n.t('listening');
+        hint.classList.remove('voice-hint-error');
         result.classList.remove('hidden');
         if (interim) textEl.textContent = interim + '...';
       } else if (state === 'parsed') {
         btn.classList.remove('listening');
         hint.textContent = I18n.t('holdToSpeak');
+        hint.classList.remove('voice-hint-error');
+      } else if (state === 'error') {
+        btn.classList.remove('listening');
+        hint.textContent = interim || 'Error';
+        hint.classList.add('voice-hint-error');
       } else {
         btn.classList.remove('listening');
         hint.textContent = I18n.t('holdToSpeak');
+        hint.classList.remove('voice-hint-error');
       }
     };
 
@@ -106,6 +131,11 @@ const App = {
       }
     });
 
+    document.getElementById('formExportIcs').addEventListener('click', () => {
+      const id = document.getElementById('formEventId').value;
+      if (id) Api.exportEventIcs(id);
+    });
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const id = document.getElementById('formEventId').value;
@@ -142,6 +172,7 @@ const App = {
       document.getElementById('formReminder').value = ev.reminder_minutes || 0;
       document.getElementById('formColor').value = ev.color || '#6366F1';
       document.getElementById('formDelete').classList.remove('hidden');
+      document.getElementById('formExportIcs').classList.remove('hidden');
       document.getElementById('eventModal').classList.remove('hidden');
     });
   },
@@ -155,6 +186,7 @@ const App = {
     document.getElementById('formReminder').value = '15';
     document.getElementById('formColor').value = '#6366F1';
     document.getElementById('formDelete').classList.add('hidden');
+    document.getElementById('formExportIcs').classList.add('hidden');
     document.getElementById('eventModal').classList.remove('hidden');
   },
 
@@ -231,21 +263,53 @@ const App = {
           const time = new Date(data.event.start_time).toLocaleTimeString(I18n.currentLang, { hour: '2-digit', minute: '2-digit' });
           const msg = `${data.event.title} @ ${time}`;
 
+          NotificationSound.play();
+
           if ('Notification' in window && Notification.permission === 'granted') {
             new Notification('Voice Calendar Reminder', { body: msg });
           }
 
           TTS.speak(msg);
           document.getElementById('reminderStatus').textContent = msg;
+          this.updateReminderCount();
+        } else if (data.type === 'reminder_count') {
+          const el = document.getElementById('reminderStatus');
+          if (data.count > 0) {
+            el.textContent = `${data.count} upcoming reminder${data.count > 1 ? 's' : ''}`;
+          } else {
+            el.textContent = '';
+          }
         }
       } catch (e) {
         console.error('WS message error:', e);
       }
     };
 
+    ws.onopen = () => {
+      this.updateReminderCount();
+    };
+
     ws.onclose = () => {
       setTimeout(() => this.setupReminders(), 5000);
     };
+  },
+
+  async updateReminderCount() {
+    try {
+      const today = new Date();
+      const start = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString().slice(0, 19);
+      const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString().slice(0, 19);
+      const res = await Api.getEvents(start, end);
+      const el = document.getElementById('reminderStatus');
+      if (res.success) {
+        const withReminder = res.events.filter(e => e.reminder_minutes > 0);
+        if (withReminder.length > 0) {
+          el.textContent = `${withReminder.length} reminder${withReminder.length > 1 ? 's' : ''} today`;
+        }
+      }
+    } catch (e) {
+      // Silently ignore
+    }
   }
 };
 

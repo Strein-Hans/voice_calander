@@ -33,4 +33,12 @@ window.VOICE_CALENDAR_I18N['en-US'] = {
   updatedEvent: 'Event updated',
   operationCancelled: 'Operation cancelled',
   noMatchingEvents: 'No matching events found',
+  micDenied: 'Microphone access denied. Please allow in browser settings.',
+  networkError: 'Network error. Please check your connection.',
+  noSpeech: 'No speech detected. Please try again.',
+  weekStartDay: 0,
+  dateSchedule: 'Schedule',
+  conflictWarning: 'Time Conflict',
+  suggestedTimes: 'Suggested Times',
+  exportCalendar: 'Export to Calendar',
 };

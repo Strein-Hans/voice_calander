@@ -118,7 +118,12 @@
         </div>
 
         <div class="events-section">
-          <h3 class="section-title" data-i18n="todaySchedule">今日安排</h3>
+          <div class="section-header">
+            <h3 class="section-title" data-i18n="todaySchedule">今日安排</h3>
+            <button id="exportAllBtn" class="btn-icon-sm" title="Export all to calendar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            </button>
+          </div>
           <ul id="eventList" class="event-list"></ul>
           <p id="noEvents" class="no-events hidden" data-i18n="noEvents">暂无安排</p>
         </div>
@@ -171,6 +176,7 @@
           <div class="modal-actions">
             <button type="submit" class="btn btn-primary" data-i18n="save">保存</button>
             <button type="button" id="formDelete" class="btn btn-danger hidden" data-i18n="delete">删除</button>
+            <button type="button" id="formExportIcs" class="btn btn-secondary hidden" data-i18n="exportCalendar">导出到日历</button>
             <button type="button" id="formClose" class="btn btn-secondary" data-i18n="close">关闭</button>
           </div>
         </form>
@@ -215,6 +221,7 @@
   <script src="/js/i18n.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/tts.js"></script>
+  <script src="/js/notification-sound.js"></script>
   <script src="/js/voice.js"></script>
   <script src="/js/calendar-ui.js"></script>
   <script src="/js/event-panel.js"></script>
