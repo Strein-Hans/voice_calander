@@ -6,6 +6,7 @@ const path = require('path');
 const { initDatabase, closeDatabase } = require('./src/db/init');
 const eventRoutes = require('./src/routes/events');
 const voiceRoutes = require('./src/routes/voice');
+const settingsRoutes = require('./src/routes/settings');
 const { startReminderService, addClient } = require('./src/services/reminder');
 
 const app = express();
@@ -17,6 +18,7 @@ app.use(express.static(path.join(__dirname, 'src/public')));
 
 app.use('/api/events', eventRoutes);
 app.use('/api/voice', voiceRoutes);
+app.use('/api/settings', settingsRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });

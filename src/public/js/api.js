@@ -55,5 +55,19 @@ const Api = {
       body: JSON.stringify({ intent, params }),
     });
     return res.json();
+  },
+
+  async getSettings() {
+    const res = await fetch('/api/settings');
+    return res.json();
+  },
+
+  async saveSettings(settings) {
+    const res = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    });
+    return res.json();
   }
 };

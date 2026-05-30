@@ -560,6 +560,25 @@ body {
   min-width: 56px;
   font-size: 12px;
   font-weight: 500;
+  line-height: 34px;
+}
+
+.parse-edit {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  transition: border-color var(--transition);
+}
+
+.parse-edit:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-glow);
 }
 
 .parse-actions {

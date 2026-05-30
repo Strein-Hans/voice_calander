@@ -21,8 +21,24 @@ const CalendarUI = {
   },
 
   async loadEvents() {
-    const start = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
-    const end = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 2, 0);
+    let start, end;
+    const d = this.currentDate;
+
+    if (this.viewMode === 'month') {
+      start = new Date(d.getFullYear(), d.getMonth(), 1);
+      end = new Date(d.getFullYear(), d.getMonth() + 2, 0);
+    } else if (this.viewMode === 'week') {
+      start = new Date(d);
+      start.setDate(d.getDate() - d.getDay() - 7);
+      end = new Date(d);
+      end.setDate(d.getDate() + (6 - d.getDay()) + 7);
+    } else {
+      start = new Date(d);
+      start.setDate(d.getDate() - 1);
+      end = new Date(d);
+      end.setDate(d.getDate() + 2);
+    }
+
     const res = await Api.getEvents(
       start.toISOString().slice(0, 19),
       end.toISOString().slice(0, 19)
@@ -74,6 +90,7 @@ const CalendarUI = {
   },
 
   renderMonth(grid, titleEl) {
+    grid.className = 'calendar-grid';
     const year = this.currentDate.getFullYear();
     const month = this.currentDate.getMonth();
     titleEl.textContent = `${year} ${I18n.t('monthNames')[month]}`;
@@ -214,15 +231,14 @@ const CalendarUI = {
       });
     });
 
-    const grid2 = document.getElementById('calendarGrid');
-    grid2.querySelectorAll('.cal-cell').forEach(el => {
+    grid.querySelectorAll('.cal-cell').forEach(el => {
       el.addEventListener('click', () => {
         const date = el.dataset.date;
         if (date) App.showAddEventModal(date);
       });
     });
 
-    grid2.querySelectorAll('.cal-time-slot').forEach(el => {
+    grid.querySelectorAll('.cal-time-slot').forEach(el => {
       el.addEventListener('click', () => {
         const date = el.dataset.date;
         const hour = el.dataset.hour;

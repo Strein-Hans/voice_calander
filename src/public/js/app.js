@@ -184,10 +184,13 @@ const App = {
   setupSettings() {
     const modal = document.getElementById('settingsModal');
 
-    document.getElementById('settingsBtn').addEventListener('click', () => {
-      document.getElementById('settingApiBase').value = localStorage.getItem('vc-api-base') || '';
-      document.getElementById('settingApiKey').value = localStorage.getItem('vc-api-key') || '';
-      document.getElementById('settingModel').value = localStorage.getItem('vc-model') || '';
+    document.getElementById('settingsBtn').addEventListener('click', async () => {
+      const res = await Api.getSettings();
+      if (res.success) {
+        document.getElementById('settingApiBase').value = res.settings.api_base || '';
+        document.getElementById('settingApiKey').value = res.settings.api_key || '';
+        document.getElementById('settingModel').value = res.settings.model || '';
+      }
       modal.classList.remove('hidden');
     });
 
@@ -203,10 +206,12 @@ const App = {
       modal.classList.add('hidden');
     });
 
-    document.getElementById('settingsSave').addEventListener('click', () => {
-      localStorage.setItem('vc-api-base', document.getElementById('settingApiBase').value);
-      localStorage.setItem('vc-api-key', document.getElementById('settingApiKey').value);
-      localStorage.setItem('vc-model', document.getElementById('settingModel').value);
+    document.getElementById('settingsSave').addEventListener('click', async () => {
+      await Api.saveSettings({
+        api_base: document.getElementById('settingApiBase').value,
+        api_key: document.getElementById('settingApiKey').value,
+        model: document.getElementById('settingModel').value,
+      });
       modal.classList.add('hidden');
     });
   },

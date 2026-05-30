@@ -63,15 +63,15 @@ const EventPanel = {
       return;
     } else if (data.params) {
       if (data.params.title) {
-        html += `<div class="field"><span class="field-label">${I18n.t('title')}</span><span>${data.params.title}</span></div>`;
+        html += `<div class="field"><span class="field-label">${I18n.t('title')}</span><input type="text" id="editTitle" class="parse-edit" value="${data.params.title.replace(/"/g, '&quot;')}"></div>`;
       }
       if (data.params.start_time) {
-        const t = new Date(data.params.start_time).toLocaleString(I18n.currentLang);
-        html += `<div class="field"><span class="field-label">${I18n.t('startTime')}</span><span>${t}</span></div>`;
+        const dtVal = this.toDatetimeLocal(data.params.start_time);
+        html += `<div class="field"><span class="field-label">${I18n.t('startTime')}</span><input type="datetime-local" id="editStart" class="parse-edit" value="${dtVal}"></div>`;
       }
       if (data.params.end_time) {
-        const t = new Date(data.params.end_time).toLocaleString(I18n.currentLang);
-        html += `<div class="field"><span class="field-label">${I18n.t('endTime')}</span><span>${t}</span></div>`;
+        const dtVal = this.toDatetimeLocal(data.params.end_time);
+        html += `<div class="field"><span class="field-label">${I18n.t('endTime')}</span><input type="datetime-local" id="editEnd" class="parse-edit" value="${dtVal}"></div>`;
       }
     }
 
@@ -112,10 +112,27 @@ const EventPanel = {
     });
   },
 
+  toDatetimeLocal(isoStr) {
+    if (!isoStr) return '';
+    return isoStr.slice(0, 16);
+  },
+
+  getEditedParams() {
+    if (!this.pendingAction || !this.pendingAction.params) return this.pendingAction;
+    const params = { ...this.pendingAction.params };
+    const titleEl = document.getElementById('editTitle');
+    const startEl = document.getElementById('editStart');
+    const endEl = document.getElementById('editEnd');
+    if (titleEl) params.title = titleEl.value;
+    if (startEl) params.start_time = startEl.value.replace('T', ' ') + ':00';
+    if (endEl && endEl.value) params.end_time = endEl.value.replace('T', ' ') + ':00';
+    return params;
+  },
+
   async executePending() {
     if (!this.pendingAction) return;
 
-    const action = this.pendingAction;
+    const action = { ...this.pendingAction, params: this.getEditedParams() };
     this.pendingAction = null;
     document.getElementById('parseCard').classList.add('hidden');
 
