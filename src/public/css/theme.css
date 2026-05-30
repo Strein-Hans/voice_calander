@@ -1,52 +1,218 @@
-[data-theme="dark"] {
-  --primary: #5B9FE0;
-  --primary-dark: #4A8BC9;
-  --primary-light: #7BB3EA;
-  --bg: #1A1B1E;
-  --surface: #25262B;
-  --text: #E4E5E7;
-  --text-secondary: #9B9DA1;
-  --border: #37383C;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+/* ===== Light Theme ===== */
+[data-theme="light"] {
+  --primary: #6366F1;
+  --primary-dark: #4F46E5;
+  --primary-light: #818CF8;
+  --primary-glow: rgba(99, 102, 241, 0.2);
+  --accent: #A78BFA;
+  --accent2: #EC4899;
+  --success: #10B981;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --bg: #F8FAFC;
+  --bg-secondary: #F1F5F9;
+  --surface: rgba(255, 255, 255, 0.8);
+  --surface-solid: #FFFFFF;
+  --glass: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --text: #0F172A;
+  --text-secondary: #475569;
+  --text-dim: #94A3B8;
+  --border: rgba(0, 0, 0, 0.06);
+  --border-hover: rgba(0, 0, 0, 0.12);
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.08);
 }
 
-[data-theme="dark"] .cal-cell:hover {
-  background: #2D2E33;
+[data-theme="light"] .ambient-bg {
+  opacity: 0.3;
 }
 
-[data-theme="dark"] .cal-cell.today {
-  background: #1E2A3A;
+[data-theme="light"] .gradient-orb {
+  filter: blur(150px);
+  opacity: 0.25;
 }
 
-[data-theme="dark"] .voice-btn {
-  box-shadow: 0 4px 16px rgba(91, 159, 224, 0.2);
+[data-theme="light"] .orb-1 {
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.2), transparent 70%);
 }
 
-[data-theme="dark"] .voice-result {
-  background: #2D2E33;
+[data-theme="light"] .orb-2 {
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.15), transparent 70%);
 }
 
-[data-theme="dark"] .parse-card,
-[data-theme="dark"] .candidate-card {
-  background: #2D2E33;
-  border-color: #37383C;
+[data-theme="light"] .orb-3 {
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.1), transparent 70%);
 }
 
-[data-theme="dark"] .candidate-item {
-  background: #2D2E33;
-  border-color: #37383C;
+[data-theme="light"] .topbar {
+  background: rgba(248, 250, 252, 0.8);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
 }
 
-[data-theme="dark"] .form-group input,
-[data-theme="dark"] .form-group textarea,
-[data-theme="dark"] .form-group select {
-  background: #2D2E33;
-  border-color: #37383C;
+[data-theme="light"] .logo-text {
+  background: linear-gradient(135deg, #0F172A, #475569);
+  -webkit-background-clip: text;
+}
+
+[data-theme="light"] .side-panel {
+  background: rgba(255, 255, 255, 0.6);
+  border-left-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .statusbar {
+  background: rgba(248, 250, 252, 0.8);
+  border-top-color: rgba(0, 0, 0, 0.06);
+  color: var(--text-dim);
+}
+
+[data-theme="light"] .cal-cell {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="light"] .cal-cell:hover {
+  background: rgba(99, 102, 241, 0.04);
+}
+
+[data-theme="light"] .cal-cell.today {
+  background: rgba(99, 102, 241, 0.06);
+}
+
+[data-theme="light"] .cal-header-cell {
+  background: rgba(241, 245, 249, 0.8);
+}
+
+[data-theme="light"] .cal-time-label {
+  background: rgba(241, 245, 249, 0.8);
+}
+
+[data-theme="light"] .cal-time-slot {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+[data-theme="light"] .calendar-grid {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .event-item {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="light"] .event-item:hover {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .form-group input,
+[data-theme="light"] .form-group textarea,
+[data-theme="light"] .form-group select {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.08);
   color: var(--text);
 }
 
-[data-theme="dark"] .nav-btn {
-  background: #2D2E33;
-  border-color: #37383C;
+[data-theme="light"] .form-group input::placeholder,
+[data-theme="light"] .form-group textarea::placeholder {
+  color: var(--text-dim);
+}
+
+[data-theme="light"] .form-group input:focus,
+[data-theme="light"] .form-group textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  background: white;
+}
+
+[data-theme="light"] .nav-btn {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .nav-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="light"] .lang-select {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .icon-btn {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .icon-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
   color: var(--text);
+}
+
+[data-theme="light"] .view-switcher {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .view-btn:hover:not(.active) {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text);
+}
+
+[data-theme="light"] .modal-content {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .modal-overlay {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .parse-card {
+  background: rgba(99, 102, 241, 0.04);
+  border-color: rgba(99, 102, 241, 0.1);
+}
+
+[data-theme="light"] .candidate-card {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .candidate-item {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .candidate-item:hover {
+  background: rgba(99, 102, 241, 0.06);
+  border-color: var(--primary);
+}
+
+[data-theme="light"] .voice-result {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .btn-secondary {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text-secondary);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .modal-close-btn {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .modal-close-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
 }

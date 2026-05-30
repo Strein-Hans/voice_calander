@@ -88,6 +88,10 @@ const App = {
       modal.classList.add('hidden');
     });
 
+    document.getElementById('formCloseX').addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+
     modal.querySelector('.modal-overlay').addEventListener('click', () => {
       modal.classList.add('hidden');
     });
@@ -136,7 +140,7 @@ const App = {
       document.getElementById('formEnd').value = ev.end_time ? ev.end_time.slice(0, 16) : '';
       document.getElementById('formDesc').value = ev.description || '';
       document.getElementById('formReminder').value = ev.reminder_minutes || 0;
-      document.getElementById('formColor').value = ev.color || '#4A90D9';
+      document.getElementById('formColor').value = ev.color || '#6366F1';
       document.getElementById('formDelete').classList.remove('hidden');
       document.getElementById('eventModal').classList.remove('hidden');
     });
@@ -149,22 +153,32 @@ const App = {
     document.getElementById('formEnd').value = '';
     document.getElementById('formDesc').value = '';
     document.getElementById('formReminder').value = '15';
-    document.getElementById('formColor').value = '#4A90D9';
+    document.getElementById('formColor').value = '#6366F1';
     document.getElementById('formDelete').classList.add('hidden');
     document.getElementById('eventModal').classList.remove('hidden');
   },
 
   setupTheme() {
-    const saved = localStorage.getItem('vc-theme') || 'light';
+    const saved = localStorage.getItem('vc-theme') || 'dark';
     document.documentElement.setAttribute('data-theme', saved);
+    this.updateThemeIcon(saved);
 
     document.getElementById('themeToggle').addEventListener('click', () => {
       const current = document.documentElement.getAttribute('data-theme');
       const next = current === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('vc-theme', next);
-      document.getElementById('themeToggle').textContent = next === 'dark' ? '☀' : '🌙';
+      this.updateThemeIcon(next);
     });
+  },
+
+  updateThemeIcon(theme) {
+    const btn = document.getElementById('themeToggle');
+    if (theme === 'dark') {
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+    } else {
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+    }
   },
 
   setupSettings() {
@@ -175,6 +189,10 @@ const App = {
       document.getElementById('settingApiKey').value = localStorage.getItem('vc-api-key') || '';
       document.getElementById('settingModel').value = localStorage.getItem('vc-model') || '';
       modal.classList.remove('hidden');
+    });
+
+    document.getElementById('settingsCloseX').addEventListener('click', () => {
+      modal.classList.add('hidden');
     });
 
     document.getElementById('settingsClose').addEventListener('click', () => {

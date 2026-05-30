@@ -46,7 +46,7 @@ function create(event) {
       event.end_time || null,
       event.all_day ? 1 : 0,
       event.reminder_minutes || 0,
-      event.color || '#4A90D9',
+      event.color || '#6366F1',
       event.recurrence_rule || null,
       event.source || 'voice',
     ]

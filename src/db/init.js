@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS events (
   end_time        TEXT,
   all_day         INTEGER DEFAULT 0,
   reminder_minutes INTEGER DEFAULT 0,
-  color           TEXT    DEFAULT '#4A90D9',
+  color           TEXT    DEFAULT '#6366F1',
   recurrence_rule TEXT    DEFAULT NULL,
   source          TEXT    DEFAULT 'voice',
   created_at      TEXT    DEFAULT (datetime('now', 'localtime')),
