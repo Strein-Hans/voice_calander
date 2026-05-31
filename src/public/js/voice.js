@@ -7,6 +7,8 @@ const Voice = {
   maxRetries: 3,
   initAttempts: 0,
   isMobile: false,
+  isCapacitor: false,
+  nativePlugin: null,
 
   isMobileDevice() {
     return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) &&
@@ -14,18 +16,38 @@ const Voice = {
   },
 
   init() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.warn('Speech Recognition not supported');
-      return false;
+    // 检测 Capacitor 环境
+    this.isCapacitor = window.Capacitor !== undefined &&
+                        window.Capacitor.getPlatform() === 'android';
+
+    if (this.isCapacitor) {
+      console.log('Running in Capacitor Android environment');
+      // 检查原生插件是否可用
+      if (window.Capacitor.Plugins && window.Capacitor.Plugins.NativeSpeechRecognition) {
+        this.nativePlugin = window.Capacitor.Plugins.NativeSpeechRecognition;
+        console.log('Using native speech recognition plugin');
+      } else {
+        console.warn('Native plugin not available, falling back to Web Speech API');
+      }
+    } else {
+      console.log('Running in web environment');
     }
 
-    this.isMobile = /Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(navigator.userAgent);
-    console.log('Mobile device detected:', this.isMobile, 'UA:', navigator.userAgent);
+    // Web 环境下初始化 Web Speech API
+    if (!this.isCapacitor || !this.nativePlugin) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        console.warn('Speech Recognition not supported');
+        return false;
+      }
 
-    this.createRecognition();
+      this.isMobile = /Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(navigator.userAgent);
+      console.log('Mobile device detected:', this.isMobile, 'UA:', navigator.userAgent);
+
+      this.createRecognition();
+    }
+
     this.requestPermission();
-
     return true;
   },
 
@@ -142,7 +164,16 @@ const Voice = {
     }
   },
 
-  startListening() {
+  async startListening() {
+    console.log('Voice.startListening called');
+
+    // Capacitor 原生插件优先
+    if (this.isCapacitor && this.nativePlugin) {
+      console.log('Using native speech recognition');
+      return this.startNative();
+    }
+
+    // Web Speech API 降级方案
     console.log('Voice.startListening called, recognition:', !!this.recognition);
 
     if (!this.recognition) {
@@ -190,7 +221,66 @@ const Voice = {
     }
   },
 
-  stopListening() {
+  async startNative() {
+    try {
+      this.setState('listening');
+      this.retryCount = 0;
+
+      console.log('Starting native audio recording...');
+
+      // Start has keepAlive=true, will resolve when stop() is called
+      const result = await this.nativePlugin.start({
+        language: I18n.getSpeechLang()
+      });
+
+      // Result contains audioBase64 when recording is done
+      console.log('Recording result received:', result ? 'yes' : 'no');
+
+      if (result && result.audioBase64) {
+        console.log('Got audio data, length:', result.audioBase64.length);
+        this.setState('processing');
+
+        // Send to backend for speech-to-text
+        const text = await Api.speechToText(result.audioBase64);
+        if (text) {
+          console.log('STT result:', text);
+          this.setState('parsed');
+          if (this.onResult) this.onResult(text);
+        } else {
+          this.setState('idle');
+          if (this.onStateChange) this.onStateChange('error', '语音识别失败，请重试');
+        }
+      } else {
+        this.setState('idle');
+      }
+    } catch (e) {
+      console.error('Native error:', e);
+      this.setState('idle');
+      if (this.onStateChange) {
+        this.onStateChange('error', e.message || '录音失败，请重试');
+      }
+    }
+  },
+
+  async stopNativeAndGetResult() {
+    try {
+      console.log('Stopping recording...');
+      // stop() triggers the currentCall.resolve() which completes start()'s promise
+      await this.nativePlugin.stop();
+    } catch (e) {
+      console.error('Native stop error:', e);
+    }
+  },
+
+  async stopListening() {
+    // Capacitor 原生插件
+    if (this.isCapacitor && this.nativePlugin) {
+      if (this.state !== 'listening' && this.state !== 'processing') return;
+      await this.stopNativeAndGetResult();
+      return;
+    }
+
+    // Web Speech API
     if (!this.recognition) return;
     try {
       this.recognition.stop();
@@ -208,6 +298,12 @@ const Voice = {
   },
 
   async requestPermission() {
+    // 在 Capacitor 环境中跳过权限请求，由系统自动处理
+    if (this.isCapacitor) {
+      console.log('Capacitor environment: skipping manual permission request');
+      return;
+    }
+
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       console.warn('getUserMedia not available');
       return;

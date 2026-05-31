@@ -1,0 +1,20 @@
+{
+  "appId": "com.voicecalendar.app",
+  "appName": "Voice Calendar",
+  "webDir": "src/public",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "http://8.136.188.53:3000",
+    "cleartext": true
+  },
+  "android": {
+    "permissions": ["RECORD_AUDIO", "INTERNET"]
+  },
+  "plugins": {
+    "NativeSpeechRecognition": {
+      "android": {
+        "class": "com.voicecalendar.app.speechrecognition.NativeSpeechRecognitionPlugin"
+      }
+    }
+  }
+}

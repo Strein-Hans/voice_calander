@@ -142,7 +142,8 @@ function findOverlapping(startTime, endTime, excludeId) {
     effectiveEnd = start.toISOString().replace('Z', '').replace('T', ' ').slice(0, 19);
   }
 
-  let sql = 'SELECT * FROM events WHERE start_time < ? AND end_time > ?';
+  // Two events overlap if: event.start < newEnd AND (event.end IS NULL OR event.end > newStart)
+  let sql = 'SELECT * FROM events WHERE start_time < ? AND (end_time IS NULL OR end_time > ?)';
   const params = [effectiveEnd, startTime];
 
   if (excludeId) {
@@ -150,7 +151,9 @@ function findOverlapping(startTime, endTime, excludeId) {
     params.push(excludeId);
   }
 
-  return queryByText(sql, params);
+  const results = queryByText(sql, params);
+  console.log('findOverlapping query:', sql, 'params:', params, 'results:', results.length);
+  return results;
 }
 
 function findFreeSlots(date, workStart, workEnd, durationMinutes) {

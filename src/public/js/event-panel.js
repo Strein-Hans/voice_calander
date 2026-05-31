@@ -138,7 +138,17 @@ const EventPanel = {
       html += `<div style="margin-top:8px;color:var(--text-secondary);font-style:italic">${data.reply}</div>`;
     }
 
+    console.log('Parse result conflicts:', data.conflicts?.length, 'suggestions:', data.suggestions?.length);
+
     if (data.conflicts && data.conflicts.length > 0) {
+      // 先语音播报冲突事件
+      const conflictMsg = data.conflicts.map(ev => {
+        const time = new Date(ev.start_time).toLocaleTimeString(I18n.currentLang, { hour: '2-digit', minute: '2-digit' });
+        return `${time} ${ev.title}`;
+      }).join('，');
+      TTS.speak((data.reply || '') + '。检测到时间冲突：' + conflictMsg);
+
+      html += `<div class="conflict-warning">`;
       html += `<div class="conflict-warning">`;
       html += `<div class="conflict-title">⚠ ${I18n.t('conflictWarning') || '时间冲突'}</div>`;
       data.conflicts.forEach(ev => {

@@ -88,6 +88,7 @@ router.post('/parse', voiceLimiter, async (req, res) => {
         parsed.params.end_time || null,
         null
       );
+      console.log('Conflict check result:', conflicts.length, 'conflicts found');
       if (conflicts.length > 0) {
         parsed.conflicts = conflicts;
         const date = parsed.params.start_time.slice(0, 10);
@@ -95,6 +96,7 @@ router.post('/parse', voiceLimiter, async (req, res) => {
           ? Math.round((new Date(parsed.params.end_time) - new Date(parsed.params.start_time)) / 60000)
           : 60;
         parsed.suggestions = eventDao.findFreeSlots(date, 8, 20, durationMinutes || 60);
+        console.log('Suggestions:', parsed.suggestions.length);
       }
     }
 
@@ -191,5 +193,27 @@ router.post('/execute', voiceLimiter, (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+router.post('/speech-to-text', async (req, res) => {
+  try {
+    const { audio } = req.body;
+    if (!audio) {
+      return res.status(400).json({ success: false, error: 'Audio data is required' });
+    }
+
+    const result = await transcribeAudio(audio);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    console.error('Speech-to-text error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+async function transcribeAudio(base64Audio) {
+  const { recognize } = require('../ai/asr');
+  const result = await recognize(Buffer.from(base64Audio, 'base64'));
+  if (!result) throw new Error('ASR returned empty result');
+  return result;
+}
 
 module.exports = router;

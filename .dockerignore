@@ -1,0 +1,9 @@
+node_modules
+android
+.DS_Store
+*.log
+.git
+.gitignore
+data
+capacitor-plugins
+plugins

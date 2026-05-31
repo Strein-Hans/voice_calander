@@ -11,8 +11,11 @@ const Api = {
   },
 
   async request(url, options = {}) {
+    const timeout = options.timeout || this.TIMEOUT;
+    delete options.timeout;
+
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.TIMEOUT);
+    const timer = setTimeout(() => controller.abort(), timeout);
 
     try {
       const res = await fetch(url, { ...options, signal: controller.signal });
@@ -23,7 +26,8 @@ const Api = {
         throw new Error(body.error || `HTTP ${res.status}`);
       }
 
-      return await res.json();
+      const result = await res.json();
+      return result.data !== undefined ? result.data : result;
     } catch (err) {
       clearTimeout(timer);
       if (err.name === 'AbortError') {
@@ -82,6 +86,15 @@ const Api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ intent, params }),
+    });
+  },
+
+  async speechToText(audioBase64) {
+    return this.request('/api/voice/speech-to-text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ audio: audioBase64 }),
+      timeout: 30000,  // 语音识别需要更长时间
     });
   },
 

@@ -1,0 +1,12 @@
+{
+  "name": "@voicecalendar/native-speech-recognition",
+  "version": "1.0.0",
+  "description": "Native speech recognition plugin for Voice Calendar",
+  "main": "dist/plugin.js",
+  "types": "dist/plugin.d.ts",
+  "capacitor": {
+    "android": {
+      "src": "android"
+    }
+  }
+}
