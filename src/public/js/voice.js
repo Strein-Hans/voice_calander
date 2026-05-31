@@ -3,6 +3,15 @@ const Voice = {
   state: 'idle',
   onResult: null,
   onStateChange: null,
+  retryCount: 0,
+  maxRetries: 3,
+  initAttempts: 0,
+  isMobile: false,
+
+  isMobileDevice() {
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) &&
+           /Mobile|Tablet/i.test(navigator.userAgent);
+  },
 
   init() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -11,11 +20,49 @@ const Voice = {
       return false;
     }
 
-    this.recognition = new SpeechRecognition();
-    this.recognition.continuous = false;
-    this.recognition.interimResults = true;
-    this.recognition.maxAlternatives = 1;
+    this.isMobile = /Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(navigator.userAgent);
+    console.log('Mobile device detected:', this.isMobile, 'UA:', navigator.userAgent);
 
+    this.createRecognition();
+    this.requestPermission();
+
+    return true;
+  },
+
+  createRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    this.recognition = new SpeechRecognition();
+
+    if (this.isMobile) {
+      this.recognition.continuous = false;
+      this.recognition.interimResults = true;
+    } else {
+      this.recognition.continuous = false;
+      this.recognition.interimResults = true;
+    }
+    this.recognition.maxAlternatives = 1;
+    this.recognition.lang = I18n.getSpeechLang();
+
+    this.setupCallbacks();
+
+    if (this.isMobile) {
+      console.log('Mobile: attempting to trigger speech permission');
+      try {
+        this.recognition.start();
+        setTimeout(() => {
+          try {
+            this.recognition.stop();
+          } catch (e) {
+            console.log('Mobile: stop called (expected)');
+          }
+        }, 100);
+      } catch (e) {
+        console.log('Mobile: permission trigger failed:', e.name);
+      }
+    }
+  },
+
+  setupCallbacks() {
     this.recognition.onresult = (event) => {
       let interim = '';
       let final = '';
@@ -33,23 +80,50 @@ const Voice = {
       }
 
       if (final) {
+        this.retryCount = 0;
         this.setState('parsed');
         if (this.onResult) this.onResult(final);
       }
     };
 
     this.recognition.onerror = (event) => {
-      console.error('Speech error:', event.error);
+      console.error('Speech error:', event.error, 'message:', event.message);
+
+      if (event.error === 'not-allowed' || event.error === 'audio-capture') {
+        this.setState('idle');
+        if (this.onStateChange) {
+          if (this.isMobile) {
+            this.onStateChange('error', '语音识别权限被拒绝。请访问: edge://settings/content/voiceSearch，允许"语音搜索"');
+          } else {
+            this.onStateChange('error', I18n.t('micDenied'));
+          }
+        }
+        return;
+      }
+
+      if (event.error === 'no-speech') {
+        if (this.retryCount < this.maxRetries && this.state === 'listening') {
+          this.retryCount++;
+          console.log('Retry speech recognition, attempt', this.retryCount);
+          setTimeout(() => {
+            try {
+              this.recognition.start();
+            } catch (e) {
+              this.setState('idle');
+            }
+          }, 500);
+          return;
+        }
+      }
+
       this.setState('idle');
+      this.retryCount = 0;
       if (this.onStateChange) {
         const errorMessages = {
-          'not-allowed': I18n.t('micDenied'),
           'network': I18n.t('networkError'),
-          'no-speech': I18n.t('noSpeech'),
           'aborted': '',
-          'audio-capture': I18n.t('micDenied'),
         };
-        const msg = errorMessages[event.error] || event.error;
+        const msg = errorMessages[event.error] || I18n.t('networkError');
         if (msg) this.onStateChange('error', msg);
       }
     };
@@ -59,8 +133,6 @@ const Voice = {
         this.setState('idle');
       }
     };
-
-    return true;
   },
 
   setState(newState) {
@@ -71,13 +143,50 @@ const Voice = {
   },
 
   startListening() {
-    if (!this.recognition) return;
+    console.log('Voice.startListening called, recognition:', !!this.recognition);
+
+    if (!this.recognition) {
+      console.log('Creating new recognition instance');
+      this.createRecognition();
+    }
+
+    if (!this.recognition) {
+      console.error('SpeechRecognition not available');
+      this.setState('idle');
+      return;
+    }
+
     this.recognition.lang = I18n.getSpeechLang();
     this.setState('listening');
+    this.retryCount = 0;
+    this.initAttempts = 0;
+
+    console.log('Starting recognition with lang:', this.recognition.lang);
+
     try {
       this.recognition.start();
+      console.log('Recognition started successfully');
     } catch (e) {
-      // already started
+      console.error('Failed to start recognition:', e);
+
+      if (e.message && (e.message.includes('not allowed') || e.message.includes('permission'))) {
+        if (this.onStateChange) {
+          this.onStateChange('error', I18n.t('micDenied'));
+        }
+        this.setState('idle');
+        return;
+      }
+
+      this.initAttempts++;
+      if (this.initAttempts < 2) {
+        console.log('Recreate recognition instance, attempt', this.initAttempts);
+        setTimeout(() => {
+          this.createRecognition();
+          this.startListening();
+        }, 200);
+      } else {
+        this.setState('idle');
+      }
     }
   },
 
@@ -86,7 +195,7 @@ const Voice = {
     try {
       this.recognition.stop();
     } catch (e) {
-      // not started
+      console.error('Failed to stop recognition:', e);
     }
   },
 
@@ -96,5 +205,35 @@ const Voice = {
     } else {
       this.startListening();
     }
+  },
+
+  async requestPermission() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.warn('getUserMedia not available');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop());
+      console.log('Microphone permission granted');
+    } catch (e) {
+      if (e.name === 'NotAllowedError') {
+        console.warn('Microphone permission denied');
+      }
+    }
+  },
+
+  reinit() {
+    console.log('Reinitializing speech recognition...');
+    this.recognition = null;
+    this.createRecognition();
+    this.requestPermission();
+    return true;
+  },
+
+  isMobileDevice() {
+    if (this.isMobile !== undefined) return this.isMobile;
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) &&
+           /Mobile|Tablet/i.test(navigator.userAgent);
   }
 };

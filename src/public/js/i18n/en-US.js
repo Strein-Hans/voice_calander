@@ -41,4 +41,7 @@ window.VOICE_CALENDAR_I18N['en-US'] = {
   conflictWarning: 'Time Conflict',
   suggestedTimes: 'Suggested Times',
   exportCalendar: 'Export to Calendar',
+  textInputPlaceholder: 'Or type command here...',
+  submit: 'Send',
+  reinitVoice: 'Reinitialize',
 };

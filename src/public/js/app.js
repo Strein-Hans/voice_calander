@@ -97,6 +97,44 @@ const App = {
       }
     };
 
+    const textInput = document.getElementById('textInput');
+    const textSubmit = document.getElementById('textSubmit');
+
+    const submitText = async () => {
+      const text = textInput.value.trim();
+      if (!text) return;
+      textInput.value = '';
+      document.getElementById('voiceText').textContent = text;
+      document.getElementById('statusText').textContent = text;
+      document.getElementById('voiceResult').classList.remove('hidden');
+
+      try {
+        const res = await Api.parseVoice(text, I18n.currentLang);
+        if (res.success) {
+          EventPanel.showParseResult(res);
+          TTS.speak(res.reply || '');
+        }
+      } catch (err) {
+        console.error('Parse error:', err);
+        document.getElementById('statusText').textContent = 'Error: ' + err.message;
+      }
+    };
+
+    textSubmit.addEventListener('click', submitText);
+    textInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') submitText();
+    });
+
+    document.getElementById('reinitVoice').addEventListener('click', () => {
+      Voice.reinit();
+      hint.textContent = I18n.t('listening');
+      hint.classList.remove('voice-hint-error');
+    });
+
+    if (Voice.isMobile) {
+      document.getElementById('mobileTroubleshoot').classList.remove('hidden');
+    }
+
     document.getElementById('parseConfirm').addEventListener('click', () => {
       EventPanel.executePending();
     });
@@ -148,15 +186,20 @@ const App = {
         color: document.getElementById('formColor').value,
       };
 
+      let res;
       if (id) {
-        await Api.updateEvent(id, data);
+        res = await Api.updateEvent(id, data);
       } else {
-        await Api.createEvent(data);
+        res = await Api.createEvent(data);
       }
 
       modal.classList.add('hidden');
       CalendarUI.loadEvents();
       EventPanel.loadTodayEvents();
+
+      if (res.success && res.event && !id) {
+        EventPanel.shareToCalendar(res.event);
+      }
     });
   },
 

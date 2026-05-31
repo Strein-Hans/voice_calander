@@ -234,7 +234,91 @@ const EventPanel = {
       TTS.speak(action.reply || 'OK');
       CalendarUI.loadEvents();
       this.loadTodayEvents();
+
+      if (res.result && res.result.id) {
+        this.shareToCalendar(res.result);
+      }
     }
+  },
+
+  async shareToCalendar(event) {
+    if (!navigator.share || !navigator.canShare) {
+      return;
+    }
+
+    const icsContent = this.generateIcs(event);
+    const filename = encodeURIComponent(event.title.replace(/\s+/g, '_')) + '.ics';
+    const blob = new Blob([icsContent], { type: 'text/calendar' });
+    const file = new File([blob], filename, { type: 'text/calendar' });
+
+    try {
+      await navigator.share({
+        files: [file],
+        title: event.title,
+        text: `${event.start_time ? new Date(event.start_time).toLocaleString() : ''} - ${event.title}`,
+      });
+    } catch (e) {
+      if (e.name !== 'AbortError') {
+        console.error('Share failed:', e);
+      }
+    }
+  },
+
+  generateIcs(ev) {
+    const toIcsDate = (isoStr, allDay) => {
+      if (!isoStr) return '';
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return '';
+      const pad = (n) => String(n).padStart(2, '0');
+      if (allDay) {
+        return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+      }
+      return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+    };
+
+    const dtStart = toIcsDate(ev.start_time, ev.all_day);
+    const dtEnd = ev.end_time ? toIcsDate(ev.end_time, ev.all_day) : '';
+    const uid = `voice-calendar-${ev.id}@voice-calendar`;
+    const now = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+    let lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Voice Calendar//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'BEGIN:VEVENT',
+      `UID:${uid}`,
+      `DTSTAMP:${now}`,
+      `DTSTART${ev.all_day ? ';VALUE=DATE' : ''}:${dtStart}`,
+    ];
+
+    if (dtEnd) {
+      lines.push(`DTEND${ev.all_day ? ';VALUE=DATE' : ''}:${dtEnd}`);
+    }
+
+    lines.push(`SUMMARY:${this.escapeIcs(ev.title || '')}`);
+
+    if (ev.description) {
+      lines.push(`DESCRIPTION:${this.escapeIcs(ev.description)}`);
+    }
+
+    if (ev.reminder_minutes > 0) {
+      lines.push('BEGIN:VALARM');
+      lines.push('TRIGGER:-PT' + ev.reminder_minutes + 'M');
+      lines.push('ACTION:DISPLAY');
+      lines.push(`DESCRIPTION:${this.escapeIcs(ev.title || '')}`);
+      lines.push('END:VALARM');
+    }
+
+    lines.push('END:VEVENT');
+    lines.push('END:VCALENDAR');
+    return lines.join('\r\n');
+  },
+
+  escapeIcs(str) {
+    if (!str) return '';
+    return str.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
   },
 
   cancelPending() {

@@ -41,4 +41,7 @@ window.VOICE_CALENDAR_I18N['ja-JP'] = {
   conflictWarning: '時間の競合',
   suggestedTimes: '提案時間',
   exportCalendar: 'カレンダーにエクスポート',
+  textInputPlaceholder: 'またはここにコマンドを入力...',
+  submit: '送信',
+  reinitVoice: '再初期化',
 };

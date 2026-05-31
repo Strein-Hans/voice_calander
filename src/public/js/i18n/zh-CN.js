@@ -41,4 +41,7 @@ window.VOICE_CALENDAR_I18N['zh-CN'] = {
   conflictWarning: '时间冲突',
   suggestedTimes: '建议时间',
   exportCalendar: '导出到日历',
+  textInputPlaceholder: '或在此输入指令...',
+  submit: '发送',
+  reinitVoice: '重新初始化',
 };
